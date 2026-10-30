@@ -342,7 +342,10 @@ class WNetwork {
       bool aDeviceNeedsWebThings = _aDeviceNeedsWebThings();
       _webServer = new AsyncWebServer(80);
       _webServer->onNotFound(std::bind(&WNetwork::_handleUnknown, this, std::placeholders::_1));
-      if ((WiFi.status() != WL_CONNECTED) || (!aDeviceNeedsWebThings)) {
+      if ((_rootHandler) && (WiFi.status() == WL_CONNECTED)) {
+        //Own start page of the application, e.g. a dashboard. Menu is at /config
+        _webServer->on(SLASH, HTTP_GET, _rootHandler);
+      } else if ((WiFi.status() != WL_CONNECTED) || (!aDeviceNeedsWebThings)) {
         _webServer->on(SLASH, HTTP_GET, std::bind(&WNetwork::_handleHttpRootRequest, this, std::placeholders::_1));
       }
       _webServer->on("/config", HTTP_GET, std::bind(&WNetwork::_handleHttpRootRequest, this, std::placeholders::_1));
@@ -376,12 +379,18 @@ class WNetwork {
         String mdnsName = String(_hostname);
         if (MDNS.begin(mdnsName.c_str())) {
           MDNS.addService("http", "tcp", 80);
-          MDNS.addServiceTxt("http", "tcp", "url", "http://" + mdnsName + SLASH);
+          MDNS.addServiceTxt("http", "tcp", "url", "http://" + mdnsName + (_rootHandler ? "/things" : SLASH));
           MDNS.addServiceTxt("http", "tcp", "webthing", "true");
           _wlog->notice(F("MDNS responder for Webthings started at '%s'"), _hostname);
         }
-        _webServer->on(SLASH, HTTP_GET, std::bind(&WNetwork::_sendDevicesStructure, this, std::placeholders::_1));
+        if (!_rootHandler) {
+          _webServer->on(SLASH, HTTP_GET, std::bind(&WNetwork::_sendDevicesStructure, this, std::placeholders::_1));
+        }
         _devices->forEach([this](WDevice *device) { _bindWebServerCalls(device); });
+        if (_rootHandler) {
+          //After device calls, '/things' would match '/things/...' too
+          _webServer->on("/things", HTTP_GET, std::bind(&WNetwork::_sendDevicesStructure, this, std::placeholders::_1));
+        }
       }
       // Start http server
       _webServer->begin();
@@ -445,6 +454,10 @@ class WNetwork {
   bool isInitialMqttSent() { return _initialMqttSent; }
 
   bool isLastWillEnabled() { return _lastWillEnabled; }
+
+  // Serve an own page at '/' instead of the menu (menu stays at '/config').
+  // Not used in access point mode. Call before the web server starts.
+  void setRootHandler(ArRequestHandlerFunction rootHandler) { _rootHandler = rootHandler; }
 
   void setLastWillEnabled(bool lastWillEnabled) {
     _lastWillEnabled = lastWillEnabled;
@@ -566,6 +579,7 @@ class WNetwork {
   Print* _debuggingOutput;
   bool _initialMqttSent;
   bool _lastWillEnabled;
+  ArRequestHandlerFunction _rootHandler = nullptr;
   bool _waitForWifiConnection;
 
   bool _aDeviceNeedsWebThings() {
@@ -823,6 +837,9 @@ class WNetwork {
         page->print(FPSTR(HTTP_STYLE));
         page->print(FPSTR(HTTP_HEAD_END));
         _printHttpCaption(page);
+        if ((_rootHandler) && (WiFi.status() == WL_CONNECTED)) {
+          page->printf(HTTP_BUTTON, "", "get", "Dashboard");
+        }
         page->printf(HTTP_BUTTON, "wifi", "get", "Configure network");
         _pages->forEach([this, page](WPage *customPage) {
           if (customPage->isShowInMainMenu()) {
@@ -1054,9 +1071,9 @@ class WNetwork {
   }
 
   void _printHttpCaption(Print *page) {
-    page->print(F("<h2>"));
+    page->print(F("<h2><a href='/config'>"));
     page->print(_applicationName);
-    page->print(F("</h2><h3>Idx: "));
+    page->print(F("</a></h2><h3>Idx: "));
     page->print(getIdx());
     page->print(F("</h3><h3>Rev: "));
     page->print(_firmwareVersion);

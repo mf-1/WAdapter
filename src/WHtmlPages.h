@@ -28,76 +28,39 @@ const static char HTTP_HEAD_BEGIN[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html lang='en'>
 	<head>
-		<meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'/>
+		<meta name='viewport' content='width=device-width, initial-scale=1'/>
+		<meta name='color-scheme' content='light dark'/>
 		<title>%s</title>
 )=====";
 
 const static char HTTP_STYLE[] PROGMEM = R"=====(
 <style>
-body{
-	text-align: center;
-	font-family: arial, sans-serif;
-	background-color: #474e5d;
-}
-
-div{
-  color:black;
-	border:1.0rem
-  border-radius:0.3rem;
-	background-size: 1em;
-	padding:5px;
-}
-
-.ip {
-  width: 100%;
-	-webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-  box-sizing: border-box;         /* Opera/IE 8+ */
-}
-
-button, .cbtn {
-	border:0;
-	border-radius:0.3rem;
-	background-color:#0070AF;
-	color:white;
-	line-height:2.4rem;
-	font-size:1.2rem;
-	width:100%;
-	opacity: 0.85;
-}
-
-button:hover{
-	opacity: 1.0;
-}
-
-.mc {
-	display:inline-block;
-	background-color: #fefefe;
-	padding: 10px;
-  text-align: center;
-	border-radius:0.3rem;
-	min-width:300px;
-	text-align:left;
-}
-
-.cbtn{
-	background-color:#FF3030;
-}
-
-.st, .tt {
-	margin-left: auto;
-  margin-right: auto;
-}
-
-.st th, .st td {
-	border: 1px solid lightgray;
-  border-collapse: collapse;
-}
-
-.st input[type='text']{
-	width: 40px;
-}
-
+:root{--bg:#f2f4f7;--card:#fff;--fg:#1d2433;--muted:#667085;--line:#d0d5dd;--field:#f9fafb;--accent:#0b72c6;--danger:#d92d20}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--card:#1a1f29;--fg:#e6e9ef;--muted:#98a2b3;--line:#344054;--field:#11151c;--accent:#3d9be9;--danger:#f04438}}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:center}
+.mc{display:inline-block;width:100%;max-width:560px;text-align:left;background:var(--card);border-radius:14px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06)}
+.mc .mc{display:block;max-width:none;padding:0;box-shadow:none;border-radius:0}
+div{padding:6px 0}
+h2{margin:0 0 2px;font-size:1.4rem}
+h3{display:inline-block;margin:0 14px 12px 0;font-size:.85rem;font-weight:400;color:var(--muted)}
+button,.cbtn{width:100%;border:0;border-radius:9px;background:var(--accent);color:#fff;font:inherit;font-weight:600;padding:11px 14px;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+.cbtn{background:var(--danger)}
+input,select{font:inherit;color:inherit;background:var(--field);border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+.ip{width:100%;margin-top:4px}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+label{display:inline-flex;gap:10px;align-items:flex-start;cursor:pointer}
+input[type=checkbox],input[type=radio]{width:18px;height:18px;margin:3px 0 0;padding:0;accent-color:var(--accent);flex:none}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 4px;text-align:left}
+th{font-weight:600;color:var(--muted)}
+.st,.tt{margin:0 auto}
+.st th,.st td{border:1px solid var(--line);text-align:center;font-size:.9rem}
+.st td{font-size:.75rem;color:var(--muted)}
+.st input[type=text]{display:block;width:64px;padding:5px;margin:2px auto 6px;text-align:center;font-size:.9rem;color:var(--fg)}
+a{color:var(--accent)}
+h2 a{color:inherit;text-decoration:none}
 </style>
 )=====";
 
